@@ -40,6 +40,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# generated store artifacts
+/artifacts/
+
 # capacitor / native build artifacts
 /android/.gradle/
 /android/local.properties

@@ -10,15 +10,19 @@ import {
 import Image from "next/image";
 import {
   ArrowUpRight,
+  Check,
   Globe2,
+  LockKeyhole,
   MapPin,
   Megaphone,
   Plus,
   Search,
+  ShoppingBag,
   Sparkles,
   X,
 } from "lucide-react";
 import { imageOptions, IMAGES, type Ad } from "@/lib/ads";
+import { calculateSplit, formatGhs, parseGhsAmount } from "@/lib/pricing";
 
 type Filter = "All" | "Shop" | "Product";
 
@@ -83,6 +87,10 @@ function formatDate(value: string) {
   }).format(new Date(`${value}T12:00:00`));
 }
 
+function purchaseAmount(ad: Ad): number | null {
+  return ad.pricePesewas ?? parseGhsAmount(ad.price);
+}
+
 export function AdBoard() {
   const [ads, setAds] = useState<Ad[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,6 +104,10 @@ export function AdBoard() {
   const [notice, setNotice] = useState("");
   const [promote, setPromote] = useState(false);
   const [promoNotice, setPromoNotice] = useState("");
+  const [purchaseAd, setPurchaseAd] = useState<Ad | null>(null);
+  const [purchaseEmail, setPurchaseEmail] = useState("");
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -103,7 +115,11 @@ export function AdBoard() {
       ? "Payment received — your listing is now featured at the top."
       : params.get("promote-cancelled")
         ? "Checkout cancelled. No charge was made."
-        : "";
+        : params.get("purchase") === "success"
+          ? "Payment received — the seller has been paid and your order is confirmed."
+          : params.get("purchase") === "cancelled"
+            ? "Checkout cancelled. No charge was made."
+            : "";
     if (!message) return;
     const timer = window.setTimeout(() => setPromoNotice(message), 0);
     return () => window.clearTimeout(timer);
@@ -185,6 +201,41 @@ export function AdBoard() {
       setError(submitError instanceof Error ? submitError.message : "Could not publish your listing.");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handlePurchase(event: FormEvent) {
+    event.preventDefault();
+    if (!purchaseAd) return;
+
+    setPurchaseBusy(true);
+    setPurchaseError("");
+
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adId: purchaseAd.id,
+          buyerEmail: purchaseEmail,
+        }),
+      });
+      const data = (await response.json()) as {
+        checkoutUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !data.checkoutUrl) {
+        throw new Error(data.error ?? "Could not start checkout.");
+      }
+
+      window.location.href = data.checkoutUrl;
+    } catch (purchaseErr) {
+      setPurchaseError(
+        purchaseErr instanceof Error ? purchaseErr.message : "Could not start checkout.",
+      );
+    } finally {
+      setPurchaseBusy(false);
     }
   }
 
@@ -303,7 +354,9 @@ export function AdBoard() {
         </div>
       ) : (
         <div className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((ad) => (
+          {filtered.map((ad) => {
+            const amount = purchaseAmount(ad);
+            return (
             <article
               key={ad.id}
               className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
@@ -340,18 +393,33 @@ export function AdBoard() {
                 <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
                   <MapPin size={13} /> {ad.location}
                 </p>
-                <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-4">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
                   <span className="text-[11px] text-slate-400">{formatDate(ad.createdAt)}</span>
-                  <a
-                    href={`mailto:${ad.contact}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-teal-700 transition-all hover:gap-2.5"
-                  >
-                    Contact <ArrowUpRight size={14} />
-                  </a>
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={`mailto:${ad.contact}`}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 transition-all hover:gap-2.5 hover:text-teal-700"
+                    >
+                      Contact <ArrowUpRight size={14} />
+                    </a>
+                    {amount !== null && amount >= 100 && (
+                      <button
+                        onClick={() => {
+                          setPurchaseAd(ad);
+                          setPurchaseEmail("");
+                          setPurchaseError("");
+                        }}
+                        className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-teal-700 px-3.5 text-xs font-bold text-white transition hover:bg-teal-800"
+                      >
+                        <ShoppingBag size={14} /> Buy now
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -545,6 +613,101 @@ export function AdBoard() {
                   className="h-11 rounded-xl bg-teal-700 px-6 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60"
                 >
                   {busy ? "Publishing…" : promote ? "Continue to payment" : "Publish listing"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {purchaseAd && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-6">
+          <div className="w-full max-w-md rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+            <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+              <div>
+                <h2 className="text-lg font-bold text-slate-950">Buy this listing</h2>
+                <p className="mt-1 text-sm text-slate-500">{purchaseAd.title}</p>
+              </div>
+              <button
+                onClick={() => setPurchaseAd(null)}
+                aria-label="Close checkout"
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handlePurchase} className="grid gap-4 p-6">
+              {(() => {
+                const amount = purchaseAmount(purchaseAd);
+                const split = calculateSplit(amount ?? 0);
+                return (
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-500">You pay</span>
+                      <span className="text-xl font-black text-slate-950">
+                        {formatGhs(amount ?? 0)}
+                      </span>
+                    </div>
+                    <div className="mt-3 space-y-2 border-t border-slate-200 pt-3 text-xs text-slate-500">
+                      <p className="flex justify-between">
+                        <span>Seller receives instantly</span>
+                        <span className="font-bold text-teal-700">
+                          {formatGhs(split.sellerShare)}
+                        </span>
+                      </p>
+                      <p className="flex justify-between">
+                        <span>ShopSpace commission</span>
+                        <span className="font-bold text-slate-700">
+                          {formatGhs(split.commission)}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              <label className="block">
+                <span className="mb-1.5 block text-[13px] font-semibold text-slate-700">
+                  Email for your receipt
+                </span>
+                <input
+                  required
+                  type="email"
+                  value={purchaseEmail}
+                  onChange={(event) => setPurchaseEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="h-11 w-full rounded-xl border border-slate-200 px-3 text-sm outline-none focus:border-teal-500"
+                />
+              </label>
+
+              <p className="flex items-start gap-2 rounded-xl bg-teal-50 px-3 py-2 text-xs leading-5 text-teal-800">
+                <LockKeyhole size={14} className="mt-0.5 shrink-0" />
+                Secure Paystack checkout in GHS. The seller is paid by Paystack as soon as your
+                payment succeeds.
+              </p>
+
+              {purchaseError && (
+                <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+                  {purchaseError}
+                </p>
+              )}
+
+              <div className="flex gap-3 border-t border-slate-100 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setPurchaseAd(null)}
+                  className="h-11 flex-1 rounded-xl border border-slate-200 px-5 text-sm font-bold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={purchaseBusy}
+                  className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 text-sm font-bold text-white hover:bg-teal-800 disabled:opacity-60"
+                >
+                  {purchaseBusy ? "Opening checkout…" : "Pay with Paystack"}
+                  <Check size={15} />
                 </button>
               </div>
             </form>

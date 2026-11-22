@@ -7,8 +7,10 @@ export interface Ad {
   description: string;
   image: string;
   price?: string;
+  pricePesewas?: number | null;
   location: string;
   contact: string;
+  subaccountCode?: string | null;
   createdAt: string;
   featured: boolean;
 }
@@ -44,12 +46,12 @@ export const seedAds: Ad[] = [
   {
     id: "ad-1",
     category: "Shop",
-    title: "Turnkey café space in SoHo",
+    title: "Turnkey café space in Osu",
     description:
       "Fitted café with espresso bar, seating for 28 and a bright street-facing window. Ready to open.",
     image: IMAGES.cafe,
-    price: "$6,800/mo",
-    location: "SoHo, Manhattan",
+    price: "GH₵6,800/mo",
+    location: "Osu, Accra",
     contact: "hello@shopspace.app",
     createdAt: "2026-11-18",
     featured: true,
@@ -61,8 +63,8 @@ export const seedAds: Ad[] = [
     description:
       "Slow-fermented country loaves baked daily. Supplying cafés and grocers across the city.",
     image: IMAGES.bakery,
-    price: "From $6/loaf",
-    location: "Brooklyn, NY",
+    price: "From GH₵24/loaf",
+    location: "East Legon, Accra",
     contact: "bakery@shopspace.app",
     createdAt: "2026-11-17",
     featured: false,
@@ -74,8 +76,8 @@ export const seedAds: Ad[] = [
     description:
       "Small-batch plates, bowls and cups in warm glazes. Perfect for restaurants and home shops.",
     image: IMAGES.studio,
-    price: "From $24",
-    location: "Queens, NY",
+    price: "From GH₵120",
+    location: "Adabraka, Accra",
     contact: "studio@shopspace.app",
     createdAt: "2026-11-16",
     featured: false,
@@ -87,8 +89,8 @@ export const seedAds: Ad[] = [
     description:
       "Open-plan studio with tall windows, a private workroom and strong foot traffic on weekends.",
     image: IMAGES.studio,
-    price: "$3,950/mo",
-    location: "Williamsburg, Brooklyn",
+    price: "GH₵3,950/mo",
+    location: "Cantonments, Accra",
     contact: "space@shopspace.app",
     createdAt: "2026-11-15",
     featured: false,
@@ -100,8 +102,8 @@ export const seedAds: Ad[] = [
     description:
       "Smooth, low-acid concentrate made from single-origin beans. Keeps for two weeks refrigerated.",
     image: IMAGES.cafe,
-    price: "$42/keg",
-    location: "Lower East Side, NY",
+    price: "GH₵420/keg",
+    location: "Airport Residential, Accra",
     contact: "coffee@shopspace.app",
     createdAt: "2026-11-14",
     featured: false,
@@ -109,12 +111,12 @@ export const seedAds: Ad[] = [
   {
     id: "ad-6",
     category: "Shop",
-    title: "Corner retail unit — Williamsburg",
+    title: "Corner retail unit — Osu",
     description:
       "Glass corner unit opposite the park. Ideal for a flagship brand, gallery or neighborhood shop.",
     image: IMAGES.boutique,
-    price: "$5,200/mo",
-    location: "Williamsburg, Brooklyn",
+    price: "GH₵5,200/mo",
+    location: "Osu, Accra",
     contact: "leases@shopspace.app",
     createdAt: "2026-11-13",
     featured: true,

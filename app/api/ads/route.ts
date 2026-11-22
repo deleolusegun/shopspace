@@ -4,6 +4,7 @@ import { allowedImages, type Ad } from "@/lib/ads";
 import { db } from "@/lib/db/client";
 import { ads } from "@/lib/db/schema";
 import { ensureSeeded } from "@/lib/db/seed";
+import { parseGhsAmount } from "@/lib/pricing";
 import {
   FEATURED_CURRENCY,
   FEATURED_PRICE_AMOUNT,
@@ -39,8 +40,10 @@ function toAd(row: typeof ads.$inferSelect): Ad {
     description: row.description,
     image: row.image,
     price: row.price ?? undefined,
+    pricePesewas: row.pricePesewas,
     location: row.location,
     contact: row.contact,
+    subaccountCode: row.subaccountCode,
     createdAt: row.createdAt,
     featured: row.featured === 1,
   };
@@ -76,6 +79,7 @@ export async function POST(request: Request) {
   const price = String(body.price ?? "").trim();
   const location = String(body.location ?? "").trim();
   const contact = String(body.contact ?? "").trim();
+  const sellerSubaccount = String(body.sellerSubaccount ?? "").trim();
   const promote = body.promote === true;
 
   const uploadedImage =
@@ -106,6 +110,9 @@ export async function POST(request: Request) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact)) {
     return json({ error: "Enter a valid contact email." }, { status: 400 });
   }
+  if (sellerSubaccount && !/^ACCT_[A-Za-z0-9]+$/.test(sellerSubaccount)) {
+    return json({ error: "Enter a valid Paystack subaccount code." }, { status: 400 });
+  }
 
   const config = promote ? getPaystackConfig() : null;
   if (promote && !config) {
@@ -122,8 +129,10 @@ export async function POST(request: Request) {
     description,
     image,
     price: price || undefined,
+    pricePesewas: parseGhsAmount(price),
     location,
     contact,
+    subaccountCode: sellerSubaccount || null,
     createdAt: new Date().toISOString().slice(0, 10),
     featured: false,
   };
@@ -137,8 +146,10 @@ export async function POST(request: Request) {
     description: ad.description,
     image: ad.image,
     price: ad.price ?? null,
+    pricePesewas: ad.pricePesewas ?? null,
     location: ad.location,
     contact: ad.contact,
+    subaccountCode: ad.subaccountCode ?? null,
     createdAt: ad.createdAt,
     featured: 0,
     pending: promote ? 1 : 0,

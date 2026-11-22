@@ -88,6 +88,31 @@ and subscribe it to `charge.success` and `charge.failed`. Paystack signs webhook
 
 Note: Vercel's Hobby plan is for non-commercial use. Upgrade the project to Pro before earning real money.
 
+## Buying and selling (revenue per sale)
+
+Listings with a numeric GHS price show a **Buy now** button. The buyer enters an email for their receipt and is sent to Paystack Checkout in GHS.
+
+The checkout uses a Paystack split:
+
+- The seller's subaccount receives their share immediately after Paystack confirms the charge.
+- ShopSpace keeps a flat commission (`transaction_charge`) on every sale.
+- The default commission is **5%**. Change it with `PLATFORM_COMMISSION_PERCENT`.
+- If `PAYSTACK_SUBACCOUNT_CODE` is not set, ShopSpace uses the first active subaccount on the Paystack account.
+
+New routes:
+
+| Route | Purpose |
+| --- | --- |
+| `POST /api/checkout` | Validates the ad/price and initializes a split Paystack checkout |
+| `/api/paystack/purchase-callback` | Confirms a returned buyer payment and marks the order paid |
+| `/api/paystack/webhook` | Confirms `charge.success` / `charge.failed` and updates the order |
+
+Purchases are stored in the `purchases` table. The runtime schema helper adds the table and the `price_pesewas` / `subaccount_code` columns automatically on first request, so no manual migration is needed.
+
+For per-seller payouts, each seller needs their own Paystack subaccount. You can either store the seller's subaccount on the ad or set one global subaccount with `PAYSTACK_SUBACCOUNT_CODE`.
+
+Payment is not escrow: once Paystack settles, the seller's share is theirs. Handle refunds and disputes directly through Paystack.
+
 ## Mobile apps (Play Store / App Store)
 
 The `android/` and `ios/` folders are Capacitor projects. They are not a thin browser wrapper — the app UI lives in `mobile-app/` and calls the live API at `https://my-storefront-cyan.vercel.app/api/ads`, so listings, search, posting and Paystack promotion all work inside the app.

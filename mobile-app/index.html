@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0f766e" />
+    <meta name="description" content="Discover shops and products near you, or post your own ad." />
+    <title>ShopSpace</title>
+    <link rel="icon" href="icon.png" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img src="icon.png" alt="" />
+        <div>
+          <strong>ShopSpace</strong>
+          <span>Discover shops &amp; products</span>
+        </div>
+      </div>
+      <button id="topPost" class="icon-button" type="button" aria-label="Post an ad">+</button>
+    </header>
+
+    <main>
+      <section id="browseView">
+        <div class="hero">
+          <p class="eyebrow">THE OPEN MARKETPLACE</p>
+          <h1>Find something great.</h1>
+          <p>Browse shops and products from people around you. Post your own ad in seconds.</p>
+        </div>
+
+        <label class="search">
+          <span aria-hidden="true">⌕</span>
+          <input id="search" type="search" placeholder="Search shops, products, places…" autocomplete="off" />
+        </label>
+
+        <div class="chips" role="tablist" aria-label="Filter listings">
+          <button class="chip active" data-filter="All" type="button">All</button>
+          <button class="chip" data-filter="Shop" type="button">Shops</button>
+          <button class="chip" data-filter="Product" type="button">Products</button>
+        </div>
+
+        <div id="list" class="grid" aria-live="polite"></div>
+      </section>
+
+      <section id="postView" hidden>
+        <div class="section-head">
+          <h1>Post an ad</h1>
+          <p>It takes a minute. No account needed.</p>
+        </div>
+
+        <form id="postForm" class="card form">
+          <label>
+            <span>Category</span>
+            <select id="category" required>
+              <option value="Shop">Shop</option>
+              <option value="Product">Product</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Title</span>
+            <input id="title" required minlength="3" maxlength="100" placeholder="Bright corner shop" />
+          </label>
+
+          <label>
+            <span>Description</span>
+            <textarea id="description" required minlength="10" maxlength="600" rows="4" placeholder="Tell buyers what makes it special…"></textarea>
+          </label>
+
+          <fieldset>
+            <legend>Cover photo</legend>
+            <div id="imageOptions" class="image-options"></div>
+          </fieldset>
+
+          <label class="upload">
+            <span>Or upload your own photo</span>
+            <input id="upload" type="file" accept="image/*" />
+          </label>
+
+          <div class="two-col">
+            <label>
+              <span>Price <em>(optional)</em></span>
+              <input id="price" maxlength="40" placeholder="From $10" />
+            </label>
+            <label>
+              <span>Location</span>
+              <input id="location" required minlength="2" maxlength="100" placeholder="Accra, Ghana" />
+            </label>
+          </div>
+
+          <label>
+            <span>Contact email</span>
+            <input id="contact" type="email" required placeholder="you@example.com" />
+          </label>
+
+          <label class="promote">
+            <input id="promote" type="checkbox" />
+            <span>
+              <strong>Pin it at the top for GH₵100</strong>
+              <small>Adds a Featured badge and puts your ad first via Paystack checkout.</small>
+            </span>
+          </label>
+
+          <p id="formError" class="error" hidden></p>
+
+          <button id="submit" class="primary" type="submit">Publish listing</button>
+        </form>
+      </section>
+    </main>
+
+    <nav class="bottombar" aria-label="Main navigation">
+      <button class="nav active" data-view="browse" type="button">
+        <span aria-hidden="true">⌂</span> Browse
+      </button>
+      <button class="nav" data-view="post" type="button">
+        <span aria-hidden="true">＋</span> Post ad
+      </button>
+    </nav>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
